@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skyline D&C: Hospedagem</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --sky:#1D9E75;--sky50:#E1F5EE;--sky800:#085041;
+  --dom:#E24B4A;--dom50:#FCEBEB;
+  --cmp:#854F0B;--cmp50:#FAEEDA;--cmp400:#BA7517;
+  --neu:#B4B2A9;
+  --pur:#534AB7;--pur50:#EEEDFE;--pur800:#26215C;
+  --mono:'IBM Plex Mono',monospace;
+  --bg:#ffffff;--bg2:#f5f4f0;--bg3:#eeece7;
+  --text:#1a1a18;--muted:#5F5E5A;--hint:#888780;
+  --border:rgba(0,0,0,0.10);--border2:rgba(0,0,0,0.20);
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#1c1c1a;--bg2:#242422;--bg3:#2c2c2a;
+  --text:#e8e6de;--muted:#888780;--hint:#5F5E5A;
+  --border:rgba(255,255,255,0.10);--border2:rgba(255,255,255,0.20);
+  --sky50:#04342C;--sky800:#9FE1CB;
+  --dom50:#501313;--cmp50:#412402;--pur50:#26215C;--pur800:#CECBF6;
+}}
+body{font-family:system-ui,sans-serif;background:var(--bg3);color:var(--text);font-size:13px;min-height:100vh;padding:1.25rem}
+#app{max-width:1120px;margin:0 auto}
+h1{font-size:16px;font-weight:500;margin-bottom:3px}
+.sub{font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:1rem}
+.top{display:grid;grid-template-columns:1fr 260px;gap:12px;align-items:start}
+@media(max-width:740px){.top{grid-template-columns:1fr}}
+.box{background:var(--bg);border:0.5px solid var(--border);border-radius:8px;box-shadow:0 10px 28px rgba(0,0,0,.04)}
+.bhead{font-size:10px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:9px 12px;border-bottom:0.5px solid var(--border)}
+.scatter-box{padding:12px}
+canvas{display:block;width:100%}
+.controls{display:flex;gap:6px;align-items:center;margin-top:8px;flex-wrap:wrap}
+button{font-size:12px;font-weight:500;padding:4px 11px;border-radius:6px;border:0.5px solid var(--border2);background:var(--bg);color:var(--text);cursor:pointer}
+button.primary{background:var(--text);color:var(--bg);border-color:var(--text)}
+button:hover{background:var(--bg2)}
+button.primary:hover{background:var(--text);color:var(--bg);border-color:var(--text);opacity:.85}
+.pbar{flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden;min-width:50px}
+.pfill{height:100%;background:var(--text);border-radius:2px;transition:width .15s}
+.slbl{font-size:11px;color:var(--muted);font-family:var(--mono);white-space:nowrap}
+.legend{display:flex;gap:10px;flex-wrap:wrap;padding:7px 12px;border-top:0.5px solid var(--border)}
+.leg{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)}
+.ldot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.side{display:flex;flex-direction:column;gap:10px}
+.explain-box{padding:10px 12px}
+.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:500;margin-bottom:5px}
+.badge.div{background:var(--pur50);color:var(--pur800)}
+.badge.cmp{background:var(--cmp50);color:var(--cmp)}
+.badge.base{background:var(--bg2);color:var(--muted)}
+.badge.merge,.badge.fim{background:var(--sky50);color:var(--sky800)}
+.etext{font-size:12px;line-height:1.55;margin-bottom:6px}
+.etext b{font-weight:500}
+.ewhy{font-size:11px;color:var(--muted);line-height:1.5;padding:6px 8px;background:var(--bg2);border-left:2px solid var(--border2);border-radius:0}
+.vs{display:grid;grid-template-columns:1fr 20px 1fr;gap:5px;align-items:start;margin:6px 0}
+.hcard{border-radius:8px;border:0.5px solid var(--border);padding:7px 9px;background:var(--bg2)}
+.hcard.win{background:var(--sky50);border-color:var(--sky)}
+.hcard.lose{background:var(--dom50);border-color:var(--dom);opacity:.75}
+.hcard img,.hcard .hph{width:100%;height:56px;border-radius:4px;margin-bottom:5px;display:block;object-fit:cover;cursor:pointer}
+.hcard .hph{background:var(--border);display:flex;align-items:center;justify-content:center;font-size:20px}
+.hname{font-size:10px;font-weight:500;line-height:1.3}
+.hprice{font-size:12px;font-weight:600;font-family:var(--mono);margin:2px 0 1px}
+.hdist{font-size:10px;color:var(--muted)}
+.hbadge{font-size:9px;font-weight:500;padding:1px 5px;border-radius:3px;margin-top:3px;display:inline-block}
+.hcard.win .hbadge{background:var(--sky);color:#fff}
+.hcard.lose .hbadge{background:var(--dom);color:#fff}
+.vs-mid{font-size:10px;font-weight:500;color:var(--muted);text-align:center;padding-top:16px}
+.sky-list{padding:4px 0}
+.sky-row{display:flex;align-items:center;gap:8px;padding:6px 12px;border-bottom:0.5px solid var(--border);cursor:pointer}
+.sky-row:last-child{border-bottom:none}
+.sky-row:hover{background:var(--bg2)}
+.sthumb{width:34px;height:34px;border-radius:4px;object-fit:cover;flex-shrink:0}
+.sph{width:28px;height:28px;border-radius:4px;background:var(--bg2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--hint)}
+.sinfo{flex:1;min-width:0}
+.sname{font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.snums{font-size:10px;color:var(--muted);font-family:var(--mono)}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--sky);flex-shrink:0}
+.hotel-grid{display:grid;grid-template-columns:repeat(5,1fr)}
+@media(max-width:740px){.hotel-grid{grid-template-columns:repeat(2,1fr)}}
+.hotel-tile{display:grid;grid-template-rows:auto 1fr;gap:6px;padding:8px;border-right:0.5px solid var(--border);border-bottom:0.5px solid var(--border);cursor:pointer;min-width:0;background:var(--bg)}
+.hotel-tile:nth-child(5n){border-right:none}
+.hotel-tile:hover{background:var(--bg2)}
+.hotel-tile.sky{box-shadow:inset 0 0 0 1px var(--sky)}
+.hotel-tile.dom{opacity:.78}
+.ithumb{width:100%;aspect-ratio:4/3;border-radius:5px;object-fit:cover;display:block;background:var(--bg2)}
+.iph{width:100%;aspect-ratio:4/3;border-radius:5px;background:var(--bg2);border:0.5px dashed var(--border2);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--hint)}
+.ilabel{font-size:10px;color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.imeta{font-size:9px;color:var(--muted);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.itag{font-size:9px;font-weight:600;border-radius:3px;padding:2px 5px;width:max-content;margin-top:2px}
+.itag.sky{background:var(--sky50);color:var(--sky800)}
+.itag.dom{background:var(--dom50);color:var(--dom)}
+.icell input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.choice-box{padding:10px 12px;border-top:0.5px solid var(--border);background:var(--bg2)}
+.choice-title{font-size:11px;font-weight:700;margin-bottom:5px}
+.choice-text{font-size:11px;color:var(--muted);line-height:1.45}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.58);display:none;align-items:center;justify-content:center;padding:18px;z-index:20}
+.modal.open{display:flex}
+.modal-card{width:min(780px,100%);max-height:92vh;overflow:auto;background:var(--bg);border:0.5px solid var(--border);border-radius:8px;box-shadow:0 24px 70px rgba(0,0,0,.28)}
+.modal-img{width:100%;height:min(48vh,390px);object-fit:cover;display:block;background:var(--bg2)}
+.modal-body{padding:14px}
+.modal-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:10px}
+.modal-title{font-size:18px;font-weight:700;line-height:1.15}
+.modal-close{width:32px;height:32px;padding:0;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.metric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+@media(max-width:560px){.metric-grid{grid-template-columns:1fr}}
+.metric{border:0.5px solid var(--border);border-radius:6px;padding:8px;background:var(--bg2)}
+.mlabel{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.mval{font-size:15px;font-weight:700;font-family:var(--mono);margin-top:2px}
+.reason{font-size:12px;line-height:1.55;color:var(--text);padding:10px;border-left:3px solid var(--sky);background:var(--sky50)}
+.reason.dom{border-left-color:var(--dom);background:var(--dom50)}
+
+/* keep primary button color when focused/active and avoid outline */
+button:focus{outline:none}
+button.primary:focus{box-shadow:0 0 0 3px rgba(0,0,0,0.06)}
+button.primary:active{background:var(--text);color:var(--bg);opacity:0.95}
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>Skyline de hospedagem: Divisão e Conquista</h1>
+  <p class="sub">menor preço × menor distância → fronteira ótima</p>
+
+  <div class="top">
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="box scatter-box">
+        <canvas id="sc" height="320"></canvas>
+        <div class="legend">
+          <div class="leg"><div class="ldot" style="background:var(--sky)"></div>no skyline</div>
+          <div class="leg"><div class="ldot" style="background:var(--dom)"></div>dominado</div>
+          <div class="leg"><div class="ldot" style="background:var(--cmp400)"></div>comparando agora</div>
+          <div class="leg"><div class="ldot" style="background:var(--neu)"></div>ainda não analisado</div>
+        </div>
+        <div class="controls">
+          <button class="primary" id="bplay">▶ Play</button>
+          <button id="bprev">&#8592;</button>
+          <button id="bnext">&#8594;</button>
+          <button id="breset">&#8635;</button>
+          <div class="pbar"><div class="pfill" id="pf"></div></div>
+          <span class="slbl" id="slbl">0/0</span>
+        </div>
+      </div>
+
+      <div class="box">
+        <div class="bhead">Árvore de recursão D&amp;C: acompanhe onde o algoritmo está</div>
+        <canvas id="tree" height="170"></canvas>
+        <div style="padding:4px 12px 8px;font-size:9px;color:var(--hint);line-height:1.4">
+          Laranja = passo atual &nbsp;·&nbsp; Verde = subproblema resolvido &nbsp;·&nbsp; Cinza = não processado &nbsp;·&nbsp; Folhas = hotéis individuais
+        </div>
+      </div>
+
+      <div class="box">
+        <div class="bhead">Hotéis: clique na imagem para ver preço, distância e decisão</div>
+        <div class="hotel-grid" id="hotel-grid"></div>
+      </div>
+    </div>
+
+    <div class="side">
+      <div class="box">
+        <div class="bhead">O que está acontecendo agora</div>
+        <div class="explain-box" id="explain"></div>
+      </div>
+      <div class="box">
+        <div class="bhead">Skyline atual <span id="sky-count" style="font-family:var(--mono);font-weight:400;color:var(--muted)"></span></div>
+        <div class="sky-list" id="sky-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="hotel-modal" aria-hidden="true">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div id="modal-image"></div>
+    <div class="modal-body">
+      <div class="modal-top">
+        <div>
+          <div class="modal-title" id="modal-title"></div>
+          <div class="sub" id="modal-sub" style="margin:.35rem 0 0"></div>
+        </div>
+        <button class="modal-close" id="modal-close" aria-label="Fechar">x</button>
+      </div>
+      <div class="metric-grid" id="modal-metrics"></div>
+      <div id="modal-reason"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const H={
+  1:{nome:"Grand Resort Premium",  preco:1200,dist:0.5},
+  2:{nome:"Hotel Executivo Centro", preco:350, dist:5.0},
+  3:{nome:"Pousada Beira-Mar",      preco:450, dist:1.2},
+  4:{nome:"Hostel Mochileiros",     preco:80,  dist:15.0},
+  5:{nome:"Airbnb Studio",          preco:200, dist:8.0},
+  6:{nome:"Ibis Aeroporto",         preco:250, dist:12.0},
+  7:{nome:"Palace Luxo SPA",        preco:2500,dist:0.1},
+  8:{nome:"Airbnb Cobertura",       preco:900, dist:2.0},
+  9:{nome:"Pousada Econômica",      preco:150, dist:20.0},
+  10:{nome:"Boutique Charme",       preco:600, dist:3.0}
+};
+const IMGS = {};
+
+// Tenta carregar imagens automaticamente de várias localizações e extensão
+function imgCandidates(i){
+  return [
+    `hoteis/hotel${i}.png`,
+    `hoteis/hotel${i}.jpg`,
+    `hoteis/hotel${i}.jpeg`,
+    `pictures/hotel${i}.png`,
+    `pictures/hotel${i}.jpg`,
+    `hotel${i}.png`,
+    `hotel${i}.jpg`
+  ];
+}
+
+function tryLoad(i, candidates, idx=0){
+  if(idx>=candidates.length){
+    console.warn(`Imagens: não foi possível localizar imagem para hotel${i} em: ${candidates.join(', ')}`);
+    return;
+  }
+  const img=new Image();
+  img.onload=()=>{IMGS[i]=img;render();};
+  img.onerror=()=>tryLoad(i,candidates,idx+1);
+  img.src=candidates[idx];
+}
+
+for(let i=1;i<=10;i++) tryLoad(i,imgCandidates(i));
+const fmt=v=>'R$'+v.toLocaleString('pt-BR');
+const OBJS=Object.entries(H).map(([id,h])=>({id:+id,...h})).sort((a,b)=>a.preco-b.preco);
+
+function dom(a,b){return(a.preco<=b.preco&&a.dist<=b.dist)&&(a.preco<b.preco||a.dist<b.dist)}
+
+const LOG=[];
+const TNODES=[];
+let nodeId=0;
+
+function dcRec(objs,parentNid){
+  const nid=nodeId++;
+  const node={nid,parentNid,objs:[...objs],skyline:null};
+  TNODES.push(node);
+  const n=objs.length;
+  if(n===1){LOG.push({tipo:'base',obj:objs[0],nid});node.skyline=[objs[0]];return[...objs];}
+  const mid=Math.floor(n/2);
+  const esq=objs.slice(0,mid),dir=objs.slice(mid);
+  LOG.push({tipo:'divide',esq,dir,nid});
+  const sE=dcRec(esq,nid),sD=dcRec(dir,nid);
+  let res=[...sE];
+  for(const ob of sD){
+    let dominated=false;
+    for(const oa of sE){
+      const dm=dom(oa,ob);
+      LOG.push({tipo:'compare',a:oa,b:ob,dominou:dm,nid});
+      if(dm){dominated=true;break;}
+    }
+    if(!dominated){
+      res.filter(r=>dom(ob,r)).forEach(l=>LOG.push({tipo:'compare',a:ob,b:l,dominou:true,nid}));
+      res=res.filter(r=>!dom(ob,r));res.push(ob);
+    }
+  }
+  LOG.push({tipo:'merge',skyline:[...res],nid});
+  node.skyline=[...res];return res;
+}
+dcRec(OBJS,null);
+LOG.push({tipo:'fim',skyline:TNODES[0].skyline||[]});
+const FINAL_SKYLINE=TNODES[0].skyline||[];
+const FINAL_SKY_IDS=new Set(FINAL_SKYLINE.map(o=>o.id));
+const MAX=LOG.length-1;
+let step=0,playing=false,timer=null;
+
+function firstDominator(obj){
+  return OBJS.find(other=>other.id!==obj.id&&dom(other,obj))||null;
+}
+
+function nearestSkyNeighbors(obj){
+  const byPrice=[...FINAL_SKYLINE].sort((a,b)=>a.preco-b.preco);
+  const cheaper=[...byPrice].reverse().find(o=>o.preco<obj.preco);
+  const closer=byPrice.find(o=>o.dist<obj.dist);
+  return{cheaper,closer};
+}
+
+function hotelDecision(obj){
+  const isSky=FINAL_SKY_IDS.has(obj.id);
+  if(!isSky){
+    const d=firstDominator(obj);
+    return{
+      isSky,
+      label:'dominado',
+      text:d
+        ? `${obj.nome} sai da escolha porque ${d.nome} custa ${fmt(d.preco)} e fica a ${d.dist} km: ele e melhor ou igual em preco e distancia. Pela funcao domina() do DeC.py, isso elimina o hotel.`
+        : `${obj.nome} nao aparece no skyline final porque foi eliminado durante a fusao dos skylines locais.`
+    };
+  }
+  const {cheaper,closer}=nearestSkyNeighbors(obj);
+  let trade='';
+  if(cheaper&&closer){
+    trade=`Existe opcao mais barata (${cheaper.nome}), mas ela fica mais longe; existe opcao mais perto (${closer.nome}), mas ela custa mais.`;
+  }else if(cheaper){
+    trade=`Existe opcao mais barata (${cheaper.nome}), mas ela fica mais longe.`;
+  }else if(closer){
+    trade=`Existe opcao mais perto (${closer.nome}), mas ela custa mais.`;
+  }else{
+    trade='Ele e a melhor ponta da fronteira para pelo menos uma dimensao. ';
+  }
+  return{
+    isSky,
+    label:'no skyline',
+    text:`${obj.nome} fica na escolha porque nenhum outro hotel e melhor ou igual ao mesmo tempo em preco e distancia. ${trade} Por isso ele representa um perfil real de preferencia no skyline calculado por divisao e conquista.`
+  };
+}
+
+function imgHtml(id, cls, alt=''){
+  return IMGS[id]
+    ? `<img class="${cls}" src="${IMGS[id].src}" alt="${alt}" data-hotel-id="${id}">`
+    : `<div class="iph" data-hotel-id="${id}">sem imagem</div>`;
+}
+
+function getState(s){
+  const dominated=new Set(),skyIds=new Set(),comparing=new Set();
+  let bA=null,bB=null,bDom=false,partial=[],activeNid=null;
+  for(let i=0;i<=s;i++){
+    const p=LOG[i];
+    if(p.tipo==='compare'){
+      if(i===s){comparing.add(p.a.id);comparing.add(p.b.id);bA=p.a;bB=p.b;bDom=p.dominou;}
+      if(p.dominou)dominated.add(p.b.id);
+    }
+    if(p.tipo==='merge'){partial=p.skyline;p.skyline.forEach(o=>skyIds.add(o.id));}
+    if(p.nid!==undefined&&i===s)activeNid=p.nid;
+  }
+  if(LOG[s].tipo==='fim'){LOG[s].skyline.forEach(o=>skyIds.add(o.id));partial=LOG[s].skyline;}
+  return{dominated,skyIds,comparing,bA,bB,bDom,partial,activeNid,ev:LOG[s]};
+}
+
+function col(id,st){
+  if(st.comparing.has(id))return'#BA7517';
+  if(st.skyIds.has(id))return'#1D9E75';
+  if(st.dominated.has(id))return'#E24B4A';
+  return'#B4B2A9';
+}
+
+const sc=document.getElementById('sc');
+const sctx=sc.getContext('2d');
+
+function drawScatter(s){
+  const st=getState(s);
+  const DPR=window.devicePixelRatio||1;
+  const W=sc.offsetWidth,HH=320;
+  sc.width=W*DPR;sc.height=HH*DPR;sctx.setTransform(DPR,0,0,DPR,0,0);
+  const P={t:18,r:16,b:40,l:56};
+  const PW=W-P.l-P.r,PH=HH-P.t-P.b;
+  sctx.clearRect(0,0,W,HH);
+  const pMax=2700,dMax=22;
+  const tx=v=>P.l+(v/pMax)*PW;
+  const ty=v=>P.t+(v/dMax)*PH;
+  const isDark=matchMedia('(prefers-color-scheme:dark)').matches;
+  const gc=isDark?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.06)';
+  const tc=isDark?'#888780':'#5F5E5A';
+  sctx.strokeStyle=gc;sctx.lineWidth=0.5;
+  [0,500,1000,1500,2000,2500].forEach(v=>{sctx.beginPath();sctx.moveTo(tx(v),P.t);sctx.lineTo(tx(v),P.t+PH);sctx.stroke();});
+  [0,5,10,15,20].forEach(v=>{sctx.beginPath();sctx.moveTo(P.l,ty(v));sctx.lineTo(P.l+PW,ty(v));sctx.stroke();});
+  sctx.fillStyle=tc;sctx.font='9px IBM Plex Mono,monospace';sctx.textAlign='center';
+  [0,500,1000,1500,2000,2500].forEach(v =>
+    sctx.fillText(
+      v >= 1000 ? (v / 1000) + 'k' : v,
+      tx(v),
+      P.t + PH + 12
+    )
+  );
+  sctx.textAlign='right';
+  [0,5,10,15,20].forEach(v=>sctx.fillText(v+'km',P.l-4,ty(v)+3));
+  sctx.fillStyle=tc;sctx.font='10px system-ui,sans-serif';sctx.textAlign='center';
+  sctx.fillText('preco (R$)',P.l+PW/2,HH-3);
+  sctx.save();sctx.translate(11,P.t+PH/2);sctx.rotate(-Math.PI/2);sctx.fillText('distancia',0,0);sctx.restore();
+  if(st.ev.tipo==='fim'&&st.partial.length){
+    const pts=[...st.partial].sort((a,b)=>a.preco-b.preco);
+    sctx.strokeStyle='#1D9E75';sctx.lineWidth=1.5;sctx.setLineDash([5,4]);sctx.globalAlpha=.5;
+    sctx.beginPath();pts.forEach((p,i)=>{const x=tx(p.preco),y=ty(p.dist);i?sctx.lineTo(x,y):sctx.moveTo(x,y);});sctx.stroke();
+    sctx.setLineDash([]);sctx.globalAlpha=1;
+  }
+  OBJS.forEach(obj=>{
+    const x=tx(obj.preco),y=ty(obj.dist),c=col(obj.id,st);
+    const r=st.comparing.has(obj.id)?9:st.skyIds.has(obj.id)?8:6;
+    sctx.beginPath();sctx.arc(x,y,r+4,0,Math.PI*2);sctx.fillStyle=c+'25';sctx.fill();
+    if(IMGS[obj.id]){
+      sctx.save();sctx.beginPath();sctx.arc(x,y,r,0,Math.PI*2);sctx.clip();
+      sctx.drawImage(IMGS[obj.id],x-r,y-r,r*2,r*2);sctx.restore();
+      sctx.beginPath();sctx.arc(x,y,r,0,Math.PI*2);sctx.strokeStyle=c;sctx.lineWidth=st.comparing.has(obj.id)?2.5:1.5;sctx.stroke();
+    } else {
+      sctx.beginPath();sctx.arc(x,y,r,0,Math.PI*2);sctx.fillStyle=c;sctx.fill();
+    }
+    if(st.comparing.has(obj.id)){sctx.beginPath();sctx.arc(x,y,r+6,0,Math.PI*2);sctx.strokeStyle=c;sctx.lineWidth=1.5;sctx.stroke();}
+    if(st.comparing.has(obj.id)||(st.ev.tipo==='fim'&&st.skyIds.has(obj.id))){
+      sctx.fillStyle=isDark?'#e8e6de':'#1a1a18';sctx.font='500 10px system-ui,sans-serif';sctx.textAlign='center';
+      sctx.fillText(obj.nome.split(' ')[0],x,y-r-6);
+    }
+  });
+}
+
+const tc2=document.getElementById('tree');
+const tctx=tc2.getContext('2d');
+
+function getDepth(nid){
+  const n=TNODES.find(x=>x.nid===nid);
+  if(!n||n.parentNid===null)return 0;
+  return 1+getDepth(n.parentNid);
+}
+function buildTreeLayout(){
+  const levels={};
+  TNODES.forEach(n=>{const d=getDepth(n.nid);if(!levels[d])levels[d]=[];levels[d].push(n);});
+  const maxDepth=Math.max(...Object.keys(levels).map(Number));
+  const pos={};
+  Object.entries(levels).forEach(([d,nodes])=>{
+    nodes.forEach((n,i)=>{pos[n.nid]={x:(i+0.5)/nodes.length,y:(+d)/(maxDepth+0.5)};});
+  });
+  return pos;
+}
+const TPOS=buildTreeLayout();
+
+function drawTree(s){
+  const st=getState(s);
+  const DPR=window.devicePixelRatio||1;
+  const W=tc2.offsetWidth,HH=170;
+  tc2.width=W*DPR;tc2.height=HH*DPR;tctx.setTransform(DPR,0,0,DPR,0,0);
+  tctx.clearRect(0,0,W,HH);
+  const isDark=matchMedia('(prefers-color-scheme:dark)').matches;
+  const PAD=20;
+  const px=x=>PAD+x*(W-PAD*2);
+  const py=y=>PAD+y*(HH-PAD*2-10);
+  const resolvedNids=new Set(LOG.slice(0,s+1).filter(l=>l.tipo==='merge'||l.tipo==='base').map(l=>l.nid));
+  TNODES.forEach(n=>{
+    if(n.parentNid===null)return;
+    const p=TPOS[n.parentNid],c=TPOS[n.nid];
+    tctx.strokeStyle=isDark?'rgba(255,255,255,0.12)':'rgba(0,0,0,0.12)';
+    tctx.lineWidth=1;tctx.beginPath();tctx.moveTo(px(p.x),py(p.y));tctx.lineTo(px(c.x),py(c.y));tctx.stroke();
+  });
+  TNODES.forEach(n=>{
+    const pos=TPOS[n.nid];
+    const x=px(pos.x),y=py(pos.y);
+    const isActive=n.nid===st.activeNid;
+    const isDone=resolvedNids.has(n.nid);
+    const isBase=n.objs.length===1;
+    let fill=isDark?'#2c2c2a':'#eeece7';
+    let stroke=isDark?'rgba(255,255,255,0.2)':'rgba(0,0,0,0.15)';
+    if(isActive){fill=isDark?'#412402':'#FAEEDA';stroke='#BA7517';}
+    else if(isDone){fill=isDark?'#04342C':'#E1F5EE';stroke='#1D9E75';}
+    tctx.beginPath();tctx.arc(x,y,isBase?5:7,0,Math.PI*2);
+    tctx.fillStyle=fill;tctx.fill();tctx.strokeStyle=stroke;tctx.lineWidth=1.5;tctx.stroke();
+    if(isActive){tctx.beginPath();tctx.arc(x,y,12,0,Math.PI*2);tctx.strokeStyle='#BA7517';tctx.lineWidth=1;tctx.stroke();}
+    if(n.objs.length<=2){
+      tctx.fillStyle=isDark?'#888780':'#5F5E5A';tctx.font='8px IBM Plex Mono,monospace';tctx.textAlign='center';
+      tctx.fillText(n.objs.map(o=>o.nome.split(' ')[0]).join('/'),x,y+16);
+    }
+  });
+}
+
+function mkExplain(s){
+  const st=getState(s);
+  const p=LOG[s];
+  const box=document.getElementById('explain');
+  let html='';
+  if(p.tipo==='base'){
+    const h=H[p.obj.id];
+    html=`<span class="badge base">caso base</span>
+    <div class="etext"><b>${h.nome}</b> ficou sozinho nesta divisao.<br>Um unico hotel nao tem com quem competir: entra direto no skyline local.</div>
+    <div class="ewhy">Criterio D&amp;C: subproblema de tamanho 1 e trivial; retorna sem comparacao.</div>`;
+  } else if(p.tipo==='divide'){
+    const names=e=>e.map(o=>o.nome.split(' ')[0]).join(', ');
+    html=`<span class="badge div">dividindo</span>
+    <div class="etext">Conjunto de <b>${p.esq.length+p.dir.length} hoteis</b> cortado ao meio.<br>
+    <b>Esq:</b> ${names(p.esq)}<br><b>Dir:</b> ${names(p.dir)}</div>
+    <div class="ewhy">Divisao pelo indice central. Cada metade resolve seu skyline de forma independente; depois os resultados sao fundidos.</div>`;
+  } else if(p.tipo==='compare'){
+    const a=p.a,b=p.b;
+    const aWinPrice=a.preco<=b.preco,aWinDist=a.dist<=b.dist;
+    let why='';
+    if(p.dominou){
+      why=`<b>${a.nome.split(' ')[0]}</b> e melhor (ou igual) em preco E distancia: <b>${b.nome.split(' ')[0]}</b> nao sera escolhido por nenhum usuario racional.`;
+    } else {
+      const adv=aWinPrice?`${a.nome.split(' ')[0]} e mais barato`:`${b.nome.split(' ')[0]} e mais barato`;
+      const adv2=aWinDist?`${a.nome.split(' ')[0]} e mais perto`:`${b.nome.split(' ')[0]} e mais perto`;
+      why=`Nenhum domina: ${adv}, mas ${adv2}. Ambos tem publico diferente: ficam no skyline.`;
+    }
+    html=`<span class="badge cmp">comparando</span>
+    <div class="vs">
+      <div class="hcard ${p.dominou?'win':''}">
+        ${IMGS[a.id]?`<img src="${IMGS[a.id].src}" alt="${a.nome}" data-hotel-id="${a.id}">`:`<div class="hph" data-hotel-id="${a.id}">sem imagem</div>`}
+        <div class="hname">${a.nome}</div>
+        <div class="hprice">${fmt(a.preco)}</div>
+        <div class="hdist">${a.dist} km da praia</div>
+        ${p.dominou?'<span class="hbadge">domina</span>':''}
+      </div>
+      <div class="vs-mid">vs</div>
+      <div class="hcard ${p.dominou?'lose':''}">
+        ${IMGS[b.id]?`<img src="${IMGS[b.id].src}" alt="${b.nome}" data-hotel-id="${b.id}">`:`<div class="hph" data-hotel-id="${b.id}">sem imagem</div>`}
+        <div class="hname">${b.nome}</div>
+        <div class="hprice">${fmt(b.preco)}</div>
+        <div class="hdist">${b.dist} km da praia</div>
+        ${p.dominou?'<span class="hbadge">eliminado</span>':''}
+      </div>
+    </div>
+    <div class="ewhy">${why}</div>`;
+  } else if(p.tipo==='merge'){
+    html=`<span class="badge merge">fundindo</span>
+    <div class="etext">Dois skylines locais fundidos em um.<br>Resultado: <b>${p.skyline.length} hoteis</b> na fronteira otima deste subconjunto.</div>
+    <div class="ewhy">Fase "conquista" do D&amp;C: combina solucoes parciais eliminando dominados entre os dois grupos.</div>`;
+  } else if(p.tipo==='fim'){
+    html=`<span class="badge fim">skyline final</span>
+    <div class="etext"><b>${p.skyline.length} hoteis</b> na fronteira otima global.<br>Todos os outros sao piores em preco E distancia simultaneamente.</div>
+    <div class="ewhy">Qualquer hotel fora do skyline tem um substituto melhor ou igual em ambas as dimensoes: racional descarta-los.</div>`;
+  }
+  box.innerHTML=html;
+}
+
+function mkSkyList(s){
+  const st=getState(s);
+  const list=document.getElementById('sky-list');
+  document.getElementById('sky-count').textContent=`(${st.partial.length})`;
+  if(!st.partial.length){list.innerHTML='<div style="padding:10px 12px;font-size:11px;color:var(--muted)">aguardando primeiras comparacoes...</div>';return;}
+  list.innerHTML=[...st.partial].sort((a,b)=>a.preco-b.preco).map(o=>`
+    <div class="sky-row" data-hotel-id="${o.id}">
+      ${IMGS[o.id]?`<img class="sthumb" src="${IMGS[o.id].src}" alt="${o.nome}">`:'<div class="sph">sem imagem</div>'}
+      <div class="sinfo"><div class="sname">${o.nome}</div><div class="snums">${fmt(o.preco)} &middot; ${o.dist}km</div></div>
+      <div class="sdot"></div>
+    </div>`).join('');
+}
+
+function mkHotelGrid(){
+  const grid=document.getElementById('hotel-grid');
+  grid.innerHTML=OBJS.map(o=>{
+    const dec=hotelDecision(o);
+    const cls=dec.isSky?'sky':'dom';
+    return`<button class="hotel-tile ${cls}" data-hotel-id="${o.id}">
+      ${imgHtml(o.id,'ithumb',o.nome)}
+      <div>
+        <div class="ilabel">${o.nome}</div>
+        <div class="imeta">${fmt(o.preco)} · ${o.dist}km</div>
+        <div class="itag ${cls}">${dec.label}</div>
+      </div>
+    </button>`;
+  }).join('');
+}
+
+function openHotel(id){
+  const obj=H[id]?{id:+id,...H[id]}:null;
+  if(!obj)return;
+  const dec=hotelDecision(obj);
+  const modal=document.getElementById('hotel-modal');
+  document.getElementById('modal-title').textContent=obj.nome;
+  document.getElementById('modal-sub').textContent=dec.isSky?'Hotel escolhido pelo skyline final':'Hotel eliminado por dominancia';
+  document.getElementById('modal-image').innerHTML=IMGS[obj.id]
+    ? `<img class="modal-img" src="${IMGS[obj.id].src}" alt="${obj.nome}">`
+    : `<div class="modal-img" style="display:flex;align-items:center;justify-content:center;color:var(--muted)">sem imagem</div>`;
+  document.getElementById('modal-metrics').innerHTML=`
+    <div class="metric"><div class="mlabel">preco</div><div class="mval">${fmt(obj.preco)}</div></div>
+    <div class="metric"><div class="mlabel">distancia</div><div class="mval">${obj.dist} km</div></div>
+    <div class="metric"><div class="mlabel">decisao D&amp;C</div><div class="mval">${dec.label}</div></div>`;
+  document.getElementById('modal-reason').innerHTML=`<div class="reason ${dec.isSky?'':'dom'}">${dec.text}</div>`;
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden','false');
+}
+
+function closeHotel(){
+  const modal=document.getElementById('hotel-modal');
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden','true');
+}
+
+function render(){
+  drawScatter(step);drawTree(step);mkExplain(step);mkSkyList(step);mkHotelGrid();
+  document.getElementById('pf').style.width=(step/MAX*100)+'%';
+  document.getElementById('slbl').textContent=`${step}/${MAX}`;
+  document.getElementById('bplay').textContent=playing?'⏸ Pausar':'▶ Play';
+}
+
+document.getElementById('bplay').onclick=()=>{
+  playing=!playing;
+  if(playing){timer=setInterval(()=>{if(step<MAX){step++;render();}else{playing=false;clearInterval(timer);render();}},480);}
+  else{clearInterval(timer);render();}
+};
+document.getElementById('bprev').onclick=()=>{if(step>0){step--;render();}};
+document.getElementById('bnext').onclick=()=>{if(step<MAX){step++;render();}};
+document.getElementById('breset').onclick=()=>{step=0;playing=false;clearInterval(timer);render();};
+document.addEventListener('click',ev=>{
+  const target=ev.target.closest('[data-hotel-id]');
+  if(target){openHotel(target.dataset.hotelId);}
+});
+document.getElementById('modal-close').onclick=closeHotel;
+document.getElementById('hotel-modal').addEventListener('click',ev=>{if(ev.target.id==='hotel-modal')closeHotel();});
+document.addEventListener('keydown',ev=>{if(ev.key==='Escape')closeHotel();});
+window.addEventListener('resize',()=>render());
+render();
+</script>
+</body>
+</html>
